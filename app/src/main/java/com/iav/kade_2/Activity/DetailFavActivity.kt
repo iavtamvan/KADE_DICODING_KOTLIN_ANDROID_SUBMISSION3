@@ -1,23 +1,19 @@
-package com.iav.kade_2
+package com.iav.kade_2.Activity
 
 import android.database.sqlite.SQLiteConstraintException
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.provider.SyncStateContract.Helpers.insert
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import com.bumptech.glide.Glide
 import com.iav.kade_2.Helper.Favorite
 import com.iav.kade_2.Helper.database
 import com.iav.kade_2.Model.Item
-import com.iav.kade_2.R.drawable.ic_star_black_24dp
-import com.iav.kade_2.R.drawable.ic_star_border_black_24dp
-import com.iav.kade_2.R.id.add_to_favorite
+import com.iav.kade_2.R
 import com.iav.kade_2.Rest.ApiService
 import com.iav.kade_2.Rest.RetroConfig
-import kotlinx.android.synthetic.main.activity_detail.*
-import kotlinx.coroutines.experimental.selects.select
+import kotlinx.android.synthetic.main.activity_detail_fav.*
 import org.jetbrains.anko.db.classParser
 import org.jetbrains.anko.db.delete
 import org.jetbrains.anko.db.insert
@@ -25,52 +21,52 @@ import org.jetbrains.anko.db.select
 import org.jetbrains.anko.toast
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
-import java.nio.file.Files.delete
-import java.util.ArrayList
+import java.util.*
 
-class DetailActivity : AppCompatActivity() {
+class DetailFavActivity : AppCompatActivity() {
     private var items: MutableList<Item> = mutableListOf()
-    private var list: ArrayList<Item> = arrayListOf()
+    private var list: ArrayList<Favorite> = arrayListOf()
     private var menuItem: Menu? = null
     private var nilai: String = "not"
     var posisi = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_detail)
+        setContentView(R.layout.activity_detail_fav)
+        ambilData()
 
-        getDataParcel()
     }
 
-    private fun getDataParcel() {
-
+    private fun ambilData() {
         list = intent.getParcelableArrayListExtra("list")
+        favoriteState()
         posisi = intent.getStringExtra("posisi").toInt()
         tv_detail_team_home.text = list.get(posisi).teamHome
         tv_detail_team_away.text = list.get(posisi).teamAway
         tv_detail_score_home.text = list.get(posisi).scoreHome
         tv_detail_score_away.text = list.get(posisi).scoreAway
-        tv_formasi_home.text = list.get(posisi).homeFormation
-        tv_formasi_away.text = list.get(posisi).awayFormation
+        tv_formasi_home.text = list.get(posisi).fHome
+        tv_formasi_away.text = list.get(posisi).fAway
         tv_goal_home.text = list.get(posisi).goalHome
         tv_goal_away.text = list.get(posisi).goalAway
-        tv_shots_home.text = list.get(posisi).shotsHome
-        tv_shots_away.text = list.get(posisi).shotsAway
-        tv_keeper_home.text = list.get(posisi).keperHome
-        tv_keeper_away.text = list.get(posisi).keperAway
-        tv_defend_home.text = list.get(posisi).defenderHome
-        tv_defend_away.text = list.get(posisi).defenderAway
+        tv_shots_home.text = list.get(posisi).shotHome
+        tv_shots_away.text = list.get(posisi).shotAway
+        tv_keeper_home.text = list.get(posisi).kiperHome
+        tv_keeper_away.text = list.get(posisi).kiperAway
+        tv_defend_home.text = list.get(posisi).defendHome
+        tv_defend_away.text = list.get(posisi).defendAway
         tv_midle_home.text = list.get(posisi).midleHome
         tv_midle_away.text = list.get(posisi).midleAway
         tv_forward_home.text = list.get(posisi).forwardHome
         tv_forward_away.text = list.get(posisi).forwardAway
-        tv_detail_tanggal.text = list.get(posisi).dateEvent
-        getHomeTeam()
-        getawayTeam()
+        tv_detail_tanggal.text = list.get(posisi).tanggal
+
+        getHome()
+        getaway()
     }
 
-    private fun getHomeTeam() {
+    private fun getHome() {
         val service: ApiService = RetroConfig.provideApi()
-        service.getTeam("" + list.get(posisi).idHomeTeam)
+        service.getTeam("" + list.get(posisi).idHome)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -90,9 +86,9 @@ class DetailActivity : AppCompatActivity() {
                 )
     }
 
-    private fun getawayTeam() {
+    private fun getaway() {
         val service: ApiService = RetroConfig.provideApi()
-        service.getTeam("" + list.get(posisi).idAwayTeam)
+        service.getTeam("" + list.get(posisi).idAway)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -113,25 +109,25 @@ class DetailActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu, menu)
+        menuInflater.inflate(R.menu.menu_fav, menu)
         menuItem = menu
         return true
     }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
                 finish()
                 true
             }
-            add_to_favorite -> {
-                if (nilai.equals("favorit")){
+            R.id.add_to_favorite -> {
+                if (nilai.equals("favorit")) {
                     removeFromFavorite()
-                    setFavorite(nilai)
+                    setFavorite()
                     true
-                }
-                else {
+                } else {
                     addToFavorite()
-                    setFavorite(nilai)
+                    setFavorite()
                     true
                 }
 //                isFavorite = !isFavorite
@@ -141,7 +137,7 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun addToFavorite(){
+    private fun addToFavorite() {
         try {
             database.use {
                 insert(Favorite.TABLE_FAVORITE,
@@ -150,73 +146,72 @@ class DetailActivity : AppCompatActivity() {
                         Favorite.TEAM_AWAY to list.get(posisi).teamAway,
                         Favorite.SCORE_HOME to list.get(posisi).scoreHome,
                         Favorite.SCORE_AWAY to list.get(posisi).scoreAway,
-                        Favorite.FHOME to list.get(posisi).homeFormation,
-                        Favorite.FAWAY to list.get(posisi).awayFormation,
+                        Favorite.FHOME to list.get(posisi).fHome,
+                        Favorite.FAWAY to list.get(posisi).fAway,
                         Favorite.GOALHOME to list.get(posisi).goalHome,
                         Favorite.GOALAWAY to list.get(posisi).goalAway,
-                        Favorite.SHOTHOME to list.get(posisi).shotsHome,
-                        Favorite.SHOTAWAY to list.get(posisi).shotsAway,
-                        Favorite.KIPERHOME to list.get(posisi).keperHome,
-                        Favorite.KIPER_AWAY to list.get(posisi).keperAway,
-                        Favorite.DEFENDHOME to list.get(posisi).defenderHome,
-                        Favorite.DEFEND_AWAY to list.get(posisi).defenderAway,
+                        Favorite.SHOTHOME to list.get(posisi).shotHome,
+                        Favorite.SHOTAWAY to list.get(posisi).shotAway,
+                        Favorite.KIPERHOME to list.get(posisi).kiperHome,
+                        Favorite.KIPER_AWAY to list.get(posisi).kiperAway,
+                        Favorite.DEFENDHOME to list.get(posisi).defendHome,
+                        Favorite.DEFEND_AWAY to list.get(posisi).defendAway,
                         Favorite.MIDLEHOME to list.get(posisi).midleHome,
                         Favorite.MIDLE_AWAY to list.get(posisi).midleAway,
                         Favorite.FORWARDHOME to list.get(posisi).forwardHome,
                         Favorite.FORWARDAWAY to list.get(posisi).forwardAway,
-                        Favorite.IDHOME to list.get(posisi).idHomeTeam,
-                        Favorite.IDAWAY to list.get(posisi).idAwayTeam,
-                        Favorite.TANGGAL to list.get(posisi).dateEvent,
+                        Favorite.IDHOME to list.get(posisi).idHome,
+                        Favorite.IDAWAY to list.get(posisi).idAway,
+                        Favorite.TANGGAL to list.get(posisi).tanggal,
                         Favorite.TEAM_BADGE to "team")
             }
             toast("added to favorite")
 
             nilai = "favorit"
 
-        } catch (e: SQLiteConstraintException){
-            toast(""+e.localizedMessage)
+        } catch (e: SQLiteConstraintException) {
+            toast("" + e.localizedMessage)
 
         }
     }
-    private fun removeFromFavorite(){
+
+    private fun removeFromFavorite() {
         try {
             database.use {
                 delete(Favorite.TABLE_FAVORITE, "(LAGA_ID = {id})",
                         "id" to list.get(posisi).lagaId.toString())
             }
             toast("removed to favorite")
+            ambilData()
 
             nilai = "not"
-        } catch (e: SQLiteConstraintException){
-            toast(""+e.localizedMessage)
-        }
-    }
-    private fun setFavorite(pilihan:String) {
-        if (pilihan.equals("not")) {
-            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, ic_star_border_black_24dp)
-        } else if (pilihan.equals("favorit")) {
-            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, ic_star_black_24dp)
+
+        } catch (e: SQLiteConstraintException) {
+            toast("" + e.localizedMessage)
+
         }
     }
 
-    private fun favoriteState(){
-        list = intent.getParcelableArrayListExtra("list")
+    private fun setFavorite() {
+        if (nilai.equals("not"))
+            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, R.drawable.ic_star_border_black_24dp)
+        else
+            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, R.drawable.ic_star_black_24dp)
+    }
+
+    private fun favoriteState() {
         database.use {
             val result = select(Favorite.TABLE_FAVORITE)
                     .whereArgs("(LAGA_ID = {id})",
                             "id" to intent.getStringExtra("id"))
             val favorite = result.parseList(classParser<Favorite>())
-            if (favorite.size != 0){
+            if (favorite.size != 0) {
                 nilai = "favorit"
-
-                setFavorite(nilai)
-            }else{
+                setFavorite()
+            } else {
                 nilai = "not"
-
-                setFavorite(nilai)
-
+                setFavorite()
             }
         }
     }
-
 }

@@ -6,7 +6,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.iav.kade_2.DetailActivity
+import com.iav.kade_2.Activity.DetailActivity
 import com.iav.kade_2.Model.Item
 import com.iav.kade_2.R
 import kotlinx.android.synthetic.main.list_last_match.view.*

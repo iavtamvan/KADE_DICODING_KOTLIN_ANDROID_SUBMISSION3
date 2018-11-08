@@ -1,9 +1,11 @@
-package com.iav.kade_2
+package com.iav.kade_2.Activity
 
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.v7.app.AppCompatActivity
+import com.iav.kade_2.Fragment.FavoriteFragment
 import com.iav.kade_2.Fragment.HomeFragment
+import com.iav.kade_2.R
 import kotlinx.android.synthetic.main.activity_home.*
 
 class HomeActivity : AppCompatActivity() {
@@ -15,10 +17,19 @@ class HomeActivity : AppCompatActivity() {
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_notifications -> {
+                fav()
                 return@OnNavigationItemSelectedListener true
             }
         }
         false
+    }
+
+    private fun fav() {
+        val transaction = fragmentManager.beginTransaction()
+        val fragment = FavoriteFragment()
+        transaction.replace(R.id.frame,fragment)
+        transaction.addToBackStack(null)
+        transaction.commit()
     }
 
     private fun home() {
