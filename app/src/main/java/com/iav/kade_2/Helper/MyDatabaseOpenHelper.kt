@@ -1,8 +1,7 @@
-package com.example.cia.footballschedule.helper
+package com.iav.kade_2.Helper
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import com.example.cia.footballschedule.helpe.TeamFavorit
 import org.jetbrains.anko.db.*
 
 class MyDatabaseOpenHelper(ctx: Context) : ManagedSQLiteOpenHelper(ctx, "FavoriteTeam.db", null, 4) {

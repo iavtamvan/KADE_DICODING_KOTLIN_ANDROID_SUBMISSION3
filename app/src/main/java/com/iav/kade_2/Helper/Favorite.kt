@@ -1,4 +1,4 @@
-package com.example.cia.footballschedule.helper
+package com.iav.kade_2.Helper
 
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize

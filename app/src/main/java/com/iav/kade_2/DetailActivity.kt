@@ -1,16 +1,31 @@
 package com.iav.kade_2
 
+import android.database.sqlite.SQLiteConstraintException
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.SyncStateContract.Helpers.insert
+import android.support.v4.content.ContextCompat
 import android.view.Menu
+import android.view.MenuItem
 import com.bumptech.glide.Glide
+import com.iav.kade_2.Helper.Favorite
+import com.iav.kade_2.Helper.database
 import com.iav.kade_2.Model.Item
+import com.iav.kade_2.R.drawable.ic_star_black_24dp
+import com.iav.kade_2.R.drawable.ic_star_border_black_24dp
+import com.iav.kade_2.R.id.add_to_favorite
 import com.iav.kade_2.Rest.ApiService
 import com.iav.kade_2.Rest.RetroConfig
 import kotlinx.android.synthetic.main.activity_detail.*
+import kotlinx.coroutines.experimental.selects.select
+import org.jetbrains.anko.db.classParser
+import org.jetbrains.anko.db.delete
+import org.jetbrains.anko.db.insert
+import org.jetbrains.anko.db.select
 import org.jetbrains.anko.toast
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
+import java.nio.file.Files.delete
 import java.util.ArrayList
 
 class DetailActivity : AppCompatActivity() {
@@ -96,4 +111,112 @@ class DetailActivity : AppCompatActivity() {
                         }
                 )
     }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu, menu)
+        menuItem = menu
+        return true
+    }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            add_to_favorite -> {
+                if (nilai.equals("favorit")){
+                    removeFromFavorite()
+                    setFavorite(nilai)
+                    true
+                }
+                else {
+                    addToFavorite()
+                    setFavorite(nilai)
+                    true
+                }
+//                isFavorite = !isFavorite
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun addToFavorite(){
+        try {
+            database.use {
+                insert(Favorite.TABLE_FAVORITE,
+                        Favorite.LAGA_ID to list.get(posisi).lagaId,
+                        Favorite.TEAM_HOME to list.get(posisi).teamHome,
+                        Favorite.TEAM_AWAY to list.get(posisi).teamAway,
+                        Favorite.SCORE_HOME to list.get(posisi).scoreHome,
+                        Favorite.SCORE_AWAY to list.get(posisi).scoreAway,
+                        Favorite.FHOME to list.get(posisi).homeFormation,
+                        Favorite.FAWAY to list.get(posisi).awayFormation,
+                        Favorite.GOALHOME to list.get(posisi).goalHome,
+                        Favorite.GOALAWAY to list.get(posisi).goalAway,
+                        Favorite.SHOTHOME to list.get(posisi).shotsHome,
+                        Favorite.SHOTAWAY to list.get(posisi).shotsAway,
+                        Favorite.KIPERHOME to list.get(posisi).keperHome,
+                        Favorite.KIPER_AWAY to list.get(posisi).keperAway,
+                        Favorite.DEFENDHOME to list.get(posisi).defenderHome,
+                        Favorite.DEFEND_AWAY to list.get(posisi).defenderAway,
+                        Favorite.MIDLEHOME to list.get(posisi).midleHome,
+                        Favorite.MIDLE_AWAY to list.get(posisi).midleAway,
+                        Favorite.FORWARDHOME to list.get(posisi).forwardHome,
+                        Favorite.FORWARDAWAY to list.get(posisi).forwardAway,
+                        Favorite.IDHOME to list.get(posisi).idHomeTeam,
+                        Favorite.IDAWAY to list.get(posisi).idAwayTeam,
+                        Favorite.TANGGAL to list.get(posisi).dateEvent,
+                        Favorite.TEAM_BADGE to "team")
+            }
+            toast("added to favorite")
+
+            nilai = "favorit"
+
+        } catch (e: SQLiteConstraintException){
+            toast(""+e.localizedMessage)
+
+        }
+    }
+    private fun removeFromFavorite(){
+        try {
+            database.use {
+                delete(Favorite.TABLE_FAVORITE, "(LAGA_ID = {id})",
+                        "id" to list.get(posisi).lagaId.toString())
+            }
+            toast("removed to favorite")
+
+            nilai = "not"
+        } catch (e: SQLiteConstraintException){
+            toast(""+e.localizedMessage)
+        }
+    }
+    private fun setFavorite(pilihan:String) {
+        if (pilihan.equals("not")) {
+            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, ic_star_border_black_24dp)
+        } else if (pilihan.equals("favorit")) {
+            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, ic_star_black_24dp)
+        }
+    }
+
+    private fun favoriteState(){
+        list = intent.getParcelableArrayListExtra("list")
+        database.use {
+            val result = select(Favorite.TABLE_FAVORITE)
+                    .whereArgs("(LAGA_ID = {id})",
+                            "id" to intent.getStringExtra("id"))
+            val favorite = result.parseList(classParser<Favorite>())
+            if (favorite.size != 0){
+                nilai = "favorit"
+
+                setFavorite(nilai)
+            }else{
+                nilai = "not"
+
+                setFavorite(nilai)
+
+            }
+        }
+    }
+
 }
